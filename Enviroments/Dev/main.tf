@@ -88,14 +88,57 @@ module "vmss" {
 
   virtual_machine_scale_sets = {
     for k, v in var.virtual_machine_scale_sets :
-    k => merge(v,
+    k => merge(
+      v,
+
+      # 👇 These keys ALWAYS exist (very important)
+      {
+        appgw_backend_pool_ids = []
+        lb_backend_pool_ids    = []
+        user_data              = null
+      },
+
+      # 👇 Frontend VMSS
       k == "frontend" ? {
         appgw_backend_pool_ids = module.appgw.backend_pool_ids["appgw_frontend"]
-      } :
+
+        user_data = base64encode(<<EOF
+#!/bin/bash
+apt update
+apt install -y nginx
+cat <<NGINX > /etc/nginx/sites-enabled/default
+server {
+  listen 80;
+  location / {
+    proxy_pass http://${module.lb.ilb_private_ip};
+  }
+}
+NGINX
+systemctl restart nginx
+EOF
+        )
+        } : {
+        appgw_backend_pool_ids = []
+        user_data              = null
+      },
+
+      # 👇 Backend VMSS
       k == "backend" ? {
         lb_backend_pool_ids = [module.lb.backend_pool_ids["internal_lb"]]
-      } :
-      {}
+
+        user_data = base64encode(<<EOF
+#!/bin/bash
+apt update
+apt install -y nginx
+echo "Backend is healthy" > /var/www/html/index.html
+systemctl enable nginx
+systemctl start nginx
+EOF
+        )
+        } : {
+        lb_backend_pool_ids = []
+        user_data           = null
+      }
     )
   }
 }

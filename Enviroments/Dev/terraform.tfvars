@@ -104,7 +104,18 @@ nsgs = {
         destination_port_range     = "*"
         source_address_prefix      = "*"
         destination_address_prefix = "*"
-      }
+      },
+
+      {
+        name                       = "Allow-AppGW-Probe"
+        priority                   = 101
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_address_prefix      = "AzureLoadBalancer"
+        destination_port_range     = "8080"
+        destination_address_prefix = "*"
+      },
     ]
 
     tags = {
@@ -221,7 +232,7 @@ subnet_nsg_nic_assoc = {
 
 key_vaults = {
   kv1 = {
-    key_vault_name              = "devnewkv04"
+    key_vault_name              = "devnewkv05"
     location                    = "West US 2"
     resource_group_name         = "dev_rg_01"
     enabled_for_disk_encryption = true
@@ -243,28 +254,28 @@ key_vault_secrets = {
   vmss_users = {
     secret_name         = "vmss-username"
     secret_value        = "adminuser"
-    key_vault_name      = "devnewkv04"
+    key_vault_name      = "devnewkv05"
     resource_group_name = "dev_rg_01"
   }
 
   vmss_pass = {
     secret_name         = "vmss-password"
     secret_value        = "Bbpl@#123456"
-    key_vault_name      = "devnewkv04"
+    key_vault_name      = "devnewkv05"
     resource_group_name = "dev_rg_01"
   }
 
   sql_user = {
     secret_name         = "db-username"
     secret_value        = "dbuser"
-    key_vault_name      = "devnewkv04"
+    key_vault_name      = "devnewkv05"
     resource_group_name = "dev_rg_01"
   }
 
   sql_pass = {
     secret_name         = "db-password"
     secret_value        = "Bbpl@#123456"
-    key_vault_name      = "devnewkv04"
+    key_vault_name      = "devnewkv05"
     resource_group_name = "dev_rg_01"
   }
 
@@ -293,7 +304,7 @@ key_vault_secrets = {
 #     version                       = "12.0"
 #     secret_name                   = "db-username"
 #     secret_password               = "db-password"
-#     key_vault_name                = "devnewkv04"
+#     key_vault_name                = "devnewkv05"
 #     connection_policy             = "Default"
 #     minimum_tls_version           = "1.2"
 #     public_network_access_enabled = true
@@ -359,7 +370,8 @@ load_balancers = {
     # ---------------- PROBE ----------------
     lb_probes_name      = "frontend-health-probe"
     port                = 80
-    probe_protocol      = "Tcp"
+    probe_protocol      = "Http"
+    request_path        = "/"
     interval_in_seconds = 15
     number_of_probes    = 2
 
@@ -389,7 +401,7 @@ virtual_machine_scale_sets = {
     sku                  = "Standard_D2ls_v5"
     secret_name          = "vmss-username"
     secret_password      = "vmss-password"
-    key_vault_name       = "devnewkv04"
+    key_vault_name       = "devnewkv05"
     virtual_network_name = "dev-vnet-01"
     subnet_name          = "subnet-02"
     nsg_name             = "devnsg01"
@@ -449,16 +461,16 @@ virtual_machine_scale_sets = {
   }
 
   frontend = {
-    name                            = "dev-vmss-01"
-    resource_group_name             = "dev_rg_01"
-    location                        = "West US 2"
-    sku                             = "Standard_D2ls_v5"
-    secret_name                     = "vmss-username"
-    secret_password                 = "vmss-password"
-    virtual_network_name            = "dev-vnet-01"
-    key_vault_name                  = "devnewkv04"
-    subnet_name                     = "subnet-01"
-    nsg_name                        = "devnsg01"
+    name                 = "dev-vmss-01"
+    resource_group_name  = "dev_rg_01"
+    location             = "West US 2"
+    sku                  = "Standard_D2ls_v5"
+    secret_name          = "vmss-username"
+    secret_password      = "vmss-password"
+    virtual_network_name = "dev-vnet-01"
+    key_vault_name       = "devnewkv05"
+    subnet_name          = "subnet-01"
+    nsg_name             = "devnsg01"
     # app_gateway_name                = "dev-appgw-frontend"
     instances                       = 1
     upgrade_mode                    = "Manual"
@@ -782,6 +794,18 @@ application_gateways = {
       }
     ]
 
+    probe = [
+      {
+        name                = "frontend-health-probe"
+        protocol            = "Http"
+        path                = "/"
+        interval            = 30
+        timeout             = 30
+        unhealthy_threshold = 3
+        port                = 80
+      }
+    ]
+
     backend_http_settings = [
       {
         name                  = "frontend-http-settings"
@@ -789,6 +813,7 @@ application_gateways = {
         port                  = 80
         protocol              = "Http"
         request_timeout       = 30
+        probe_name            = "frontend-health-probe"
       }
     ]
 

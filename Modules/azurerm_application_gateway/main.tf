@@ -5,11 +5,11 @@ resource "azurerm_application_gateway" "appgw" {
   resource_group_name = each.value.resource_group_name
   location            = each.value.location
 
-  fips_enabled = lookup(each.value, "fips_enabled", null)
-  enable_http2 = lookup(each.value, "enable_http2", null)
-  firewall_policy_id = lookup(each.value, "firewall_policy_id", null)
+  fips_enabled                      = lookup(each.value, "fips_enabled", null)
+  enable_http2                      = lookup(each.value, "enable_http2", null)
+  firewall_policy_id                = lookup(each.value, "firewall_policy_id", null)
   force_firewall_policy_association = lookup(each.value, "force_firewall_policy_association", null)
-  zones = lookup(each.value, "zones", null)
+  zones                             = lookup(each.value, "zones", null)
 
   dynamic "sku" {
     for_each = [each.value.sku]
@@ -48,17 +48,17 @@ resource "azurerm_application_gateway" "appgw" {
   dynamic "backend_http_settings" {
     for_each = each.value.backend_http_settings
     content {
-      name                  = backend_http_settings.value.name
-      cookie_based_affinity = backend_http_settings.value.cookie_based_affinity
-      port                  = backend_http_settings.value.port
-      protocol              = backend_http_settings.value.protocol
-      affinity_cookie_name  = lookup(backend_http_settings.value, "affinity_cookie_name", null)
-      host_name             = lookup(backend_http_settings.value, "host_name", null)
-      path                  = lookup(backend_http_settings.value, "path", null)
+      name                                = backend_http_settings.value.name
+      cookie_based_affinity               = backend_http_settings.value.cookie_based_affinity
+      port                                = backend_http_settings.value.port
+      protocol                            = backend_http_settings.value.protocol
+      affinity_cookie_name                = lookup(backend_http_settings.value, "affinity_cookie_name", null)
+      host_name                           = lookup(backend_http_settings.value, "host_name", null)
+      path                                = lookup(backend_http_settings.value, "path", null)
       pick_host_name_from_backend_address = lookup(backend_http_settings.value, "pick_host_name_from_backend_address", null)
-      probe_name            = lookup(backend_http_settings.value, "probe_name", null)
-      request_timeout       = lookup(backend_http_settings.value, "request_timeout", null)
-      trusted_root_certificate_names = lookup(backend_http_settings.value, "trusted_root_certificate_names", null)
+      probe_name                          = lookup(backend_http_settings.value, "probe_name", null)
+      request_timeout                     = lookup(backend_http_settings.value, "request_timeout", null)
+      trusted_root_certificate_names      = lookup(backend_http_settings.value, "trusted_root_certificate_names", null)
       # dedicated_backend_connection_enabled = lookup(backend_http_settings.value, "dedicated_backend_connection_enabled", null)
 
       dynamic "authentication_certificate" {
@@ -81,11 +81,11 @@ resource "azurerm_application_gateway" "appgw" {
   dynamic "frontend_ip_configuration" {
     for_each = each.value.frontend_ip_configuration
     content {
-      name                           = frontend_ip_configuration.value.name
-      subnet_id                     = lookup(frontend_ip_configuration.value, "subnet_id", null)
-      private_ip_address            = lookup(frontend_ip_configuration.value, "private_ip_address", null)
-      public_ip_address_id          = data.azurerm_public_ip.pip[each.key].id
-      private_ip_address_allocation = lookup(frontend_ip_configuration.value, "private_ip_address_allocation", null)
+      name                            = frontend_ip_configuration.value.name
+      subnet_id                       = lookup(frontend_ip_configuration.value, "subnet_id", null)
+      private_ip_address              = lookup(frontend_ip_configuration.value, "private_ip_address", null)
+      public_ip_address_id            = data.azurerm_public_ip.pip[each.key].id
+      private_ip_address_allocation   = lookup(frontend_ip_configuration.value, "private_ip_address_allocation", null)
       private_link_configuration_name = lookup(frontend_ip_configuration.value, "private_link_configuration_name", null)
     }
   }
@@ -133,15 +133,30 @@ resource "azurerm_application_gateway" "appgw" {
   dynamic "request_routing_rule" {
     for_each = each.value.request_routing_rule
     content {
-      name                       = request_routing_rule.value.name
-      rule_type                  = request_routing_rule.value.rule_type
-      http_listener_name         = request_routing_rule.value.http_listener_name
-      backend_address_pool_name  = lookup(request_routing_rule.value, "backend_address_pool_name", null)
-      backend_http_settings_name = lookup(request_routing_rule.value, "backend_http_settings_name", null)
+      name                        = request_routing_rule.value.name
+      rule_type                   = request_routing_rule.value.rule_type
+      http_listener_name          = request_routing_rule.value.http_listener_name
+      backend_address_pool_name   = lookup(request_routing_rule.value, "backend_address_pool_name", null)
+      backend_http_settings_name  = lookup(request_routing_rule.value, "backend_http_settings_name", null)
       redirect_configuration_name = lookup(request_routing_rule.value, "redirect_configuration_name", null)
       rewrite_rule_set_name       = lookup(request_routing_rule.value, "rewrite_rule_set_name", null)
       url_path_map_name           = lookup(request_routing_rule.value, "url_path_map_name", null)
       priority                    = lookup(request_routing_rule.value, "priority", null)
+    }
+  }
+
+  dynamic "probe" {
+    for_each = each.value.probe
+    content {
+      name                                      = probe.value.name
+      protocol                                  = probe.value.protocol
+      host                                      = lookup(probe.value, "host", null)
+      path                                      = probe.value.path
+      interval                                  = probe.value.interval
+      timeout                                   = probe.value.timeout
+      unhealthy_threshold                       = probe.value.unhealthy_threshold
+      port                                      = probe.value.port
+      pick_host_name_from_backend_http_settings = true
     }
   }
 
