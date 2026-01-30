@@ -33,11 +33,11 @@ module "subnet_nsg_nic_assoc" {
   subnet_nsg_nic_assoc = var.subnet_nsg_nic_assoc
 }
 
-module "bastion_host" {
-  depends_on    = [module.public_ip, module.subnet, ]
-  source        = "../../Modules/azurerm_bastion_host"
-  bastion_hosts = var.bastion_hosts
-}
+# module "bastion_host" {
+#   depends_on    = [module.public_ip, module.subnet, ]
+#   source        = "../../Modules/azurerm_bastion_host"
+#   bastion_hosts = var.bastion_hosts
+# }
 
 module "kv" {
   depends_on = [module.rg]
@@ -57,35 +57,132 @@ module "nic" {
   nics       = var.nics
 }
 
-module "vm" {
-  depends_on = [module.nic, module.nsg, module.kvs]
-  source     = "../../Modules/azurerm_virtual_machine"
-  vms        = var.vms
+# module "stg" {
+#   depends_on       = [module.rg]
+#   source           = "../../Modules/azurerm_storage_account"
+#   storage_accounts = var.storage_accounts
+# }
+
+# module "sql_server" {
+#   depends_on  = [module.rg, module.kvs]
+#   source      = "../../Modules/azurerm_sql_server"
+#   sql_servers = var.sql_servers
+# }
+
+# module "sql_db" {
+#   depends_on    = [module.sql_server]
+#   source        = "../../Modules/azurerm_sql_database"
+#   sql_databases = var.sql_databases
+# }
+
+module "lb" {
+  depends_on     = [module.rg, module.subnet, module.nsg]
+  source         = "../../Modules/azurerm_internal_load_balancer"
+  load_balancers = var.load_balancers
 }
 
-module "stg" {
-  depends_on       = [module.rg]
-  source           = "../../Modules/azurerm_storage_account"
-  storage_accounts = var.storage_accounts
+module "vmss" {
+  depends_on = [module.nic, module.lb, module.kvs, module.appgw]
+  source     = "../../Modules/azurerm_linux_virtual_machine_scale_set"
+  # virtual_machine_scale_sets = var.virtual_machine_scale_sets
+
+  virtual_machine_scale_sets = {
+    for k, v in var.virtual_machine_scale_sets :
+    k => merge(
+      v,
+
+      # 👇 These keys ALWAYS exist (very important)
+      {
+        appgw_backend_pool_ids = []
+        lb_backend_pool_ids    = []
+        user_data              = null
+      },
+
+      # 👇 Frontend VMSS
+      #       k == "frontend" ? {
+      #         appgw_backend_pool_ids = module.appgw.backend_pool_ids["appgw_frontend"]
+
+      #         user_data = base64encode(<<EOF
+      # #!/bin/bash
+      # apt update
+      # apt install -y nginx
+      # cat <<NGINX > /etc/nginx/sites-enabled/default
+      # server {
+      #   listen 80;
+      #   location / {
+      #     proxy_pass http://${module.lb.ilb_private_ip};
+      #   }
+      # }
+      # NGINX
+      # systemctl restart nginx
+      # EOF
+      #         )
+      #         } : {
+      #         appgw_backend_pool_ids = []
+      #         user_data              = null
+      #       },
+      k == "frontend" ? {
+        appgw_backend_pool_ids = [
+          module.appgw.backend_pool_ids["appgw_frontend"]["frontend-vmss-pool"]
+        ]
+
+        user_data = base64encode(<<EOF
+#!/bin/bash
+apt update
+apt install -y nginx
+cat <<NGINX > /etc/nginx/sites-enabled/default
+server {
+  listen 80;
+  location / {
+    proxy_pass http://${module.lb.ilb_private_ip};
+  }
+}
+NGINX
+systemctl restart nginx
+EOF
+        )
+        } : {
+        appgw_backend_pool_ids = []
+        user_data              = null
+      },
+
+      # 👇 Backend VMSS
+      k == "backend" ? {
+        lb_backend_pool_ids = [module.lb.backend_pool_ids["internal_lb"]]
+
+        user_data = base64encode(<<EOF
+#!/bin/bash
+apt update
+apt install -y nginx
+echo "Backend is healthy" > /var/www/html/index.html
+systemctl enable nginx
+systemctl start nginx
+EOF
+        )
+        } : {
+        lb_backend_pool_ids = []
+        user_data           = null
+      }
+    )
+  }
 }
 
-module "sql_server" {
-  depends_on  = [module.rg, module.kvs]
-  source      = "../../Modules/azurerm_sql_server"
-  sql_servers = var.sql_servers
+module "vmss_autoscale_settings" {
+  depends_on              = [module.vmss]
+  source                  = "../../Modules/azurerm_vmss_monitor_autoscale_setting"
+  vmss_autoscale_settings = var.vmss_autoscale_settings
 }
 
-module "sql_db" {
-  depends_on    = [module.sql_server]
-  source        = "../../Modules/azurerm_sql_database"
-  sql_databases = var.sql_databases
+module "appgw" {
+  depends_on           = [module.rg, module.subnet, module.public_ip, module.nsg]
+  source               = "../../Modules/azurerm_application_gateway"
+  application_gateways = var.application_gateways
 }
-
-
-
-
-
-
+# module "log_analytics_workspaces" {
+#   depends_on               = [module.rg]
+#   source = "../../Modules/azurerm_log_analytics_workspace"
+#   log_analytics_workspaces = var.log_analytics_workspaces
+# }
 
 
 
