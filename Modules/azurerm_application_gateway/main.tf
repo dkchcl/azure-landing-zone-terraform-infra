@@ -82,7 +82,7 @@ resource "azurerm_application_gateway" "appgw" {
     for_each = each.value.frontend_ip_configuration
     content {
       name                            = frontend_ip_configuration.value.name
-      subnet_id                       = lookup(frontend_ip_configuration.value, "subnet_id", null)
+      # subnet_id                       = data.azurerm_subnet.subnet[each.key].id
       private_ip_address              = lookup(frontend_ip_configuration.value, "private_ip_address", null)
       public_ip_address_id            = data.azurerm_public_ip.pip[each.key].id
       private_ip_address_allocation   = lookup(frontend_ip_configuration.value, "private_ip_address_allocation", null)
@@ -145,18 +145,43 @@ resource "azurerm_application_gateway" "appgw" {
     }
   }
 
+  # dynamic "probe" {
+  #   for_each = each.value.probe
+  #   content {
+  #     name                                      = probe.value.name
+  #     protocol                                  = probe.value.protocol
+  #     host                                      = lookup(probe.value, "host", null)
+  #     path                                      = probe.value.path
+  #     interval                                  = probe.value.interval
+  #     timeout                                   = probe.value.timeout
+  #     unhealthy_threshold                       = probe.value.unhealthy_threshold
+  #     port                                      = probe.value.port
+  #     pick_host_name_from_backend_http_settings = lookup(probe.value, "pick_host_name_from_backend_http_settings", null)
+  #   }
+  # }
+
   dynamic "probe" {
-    for_each = each.value.probe
+    for_each = lookup(each.value, "probes", [])
+
     content {
       name                                      = probe.value.name
       protocol                                  = probe.value.protocol
-      host                                      = lookup(probe.value, "host", null)
+      host                                      = lookup(probe.value, "host", "127.0.0.1")
       path                                      = probe.value.path
       interval                                  = probe.value.interval
       timeout                                   = probe.value.timeout
       unhealthy_threshold                       = probe.value.unhealthy_threshold
-      port                                      = probe.value.port
-      pick_host_name_from_backend_http_settings = true
+      port                                      = lookup(probe.value, "port", null)
+      pick_host_name_from_backend_http_settings = false
+      minimum_servers                           = lookup(probe.value, "minimum_servers", null)
+
+      dynamic "match" {
+        for_each = lookup(probe.value, "match", null) == null ? [] : [probe.value.match]
+        content {
+          status_code = match.value.status_codes
+          body        = lookup(match.value, "body", null)
+        }
+      }
     }
   }
 

@@ -38,10 +38,8 @@ variable "application_gateways" {
     }))
 
     frontend_ip_configuration = list(object({
-      name                            = string
-      subnet_id                       = optional(string)
+      name                            = string      
       private_ip_address              = optional(string)
-      public_ip_address_id            = optional(string)
       private_ip_address_allocation   = optional(string)
       private_link_configuration_name = optional(string)
     }))
@@ -173,8 +171,8 @@ variable "application_gateways" {
       minimum_servers                           = optional(number)
 
       match = optional(object({
-        status_code = list(string)
-        body        = optional(string)
+        status_codes = list(string)
+        body         = optional(string)
       }))
     })))
 

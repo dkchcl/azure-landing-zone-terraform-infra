@@ -99,8 +99,32 @@ module "vmss" {
       },
 
       # 👇 Frontend VMSS
+      #       k == "frontend" ? {
+      #         appgw_backend_pool_ids = module.appgw.backend_pool_ids["appgw_frontend"]
+
+      #         user_data = base64encode(<<EOF
+      # #!/bin/bash
+      # apt update
+      # apt install -y nginx
+      # cat <<NGINX > /etc/nginx/sites-enabled/default
+      # server {
+      #   listen 80;
+      #   location / {
+      #     proxy_pass http://${module.lb.ilb_private_ip};
+      #   }
+      # }
+      # NGINX
+      # systemctl restart nginx
+      # EOF
+      #         )
+      #         } : {
+      #         appgw_backend_pool_ids = []
+      #         user_data              = null
+      #       },
       k == "frontend" ? {
-        appgw_backend_pool_ids = module.appgw.backend_pool_ids["appgw_frontend"]
+        appgw_backend_pool_ids = [
+          module.appgw.backend_pool_ids["appgw_frontend"]["frontend-vmss-pool"]
+        ]
 
         user_data = base64encode(<<EOF
 #!/bin/bash

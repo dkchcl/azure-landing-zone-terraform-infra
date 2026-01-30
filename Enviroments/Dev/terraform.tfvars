@@ -112,6 +112,7 @@ nsgs = {
         direction                  = "Inbound"
         access                     = "Allow"
         protocol                   = "Tcp"
+        source_port_range          = "*"
         source_address_prefix      = "AzureLoadBalancer"
         destination_port_range     = "8080"
         destination_address_prefix = "*"
@@ -813,14 +814,13 @@ application_gateways = {
         port                  = 80
         protocol              = "Http"
         request_timeout       = 30
-        probe_name            = "frontend-health-probe"
+        # probe_name            = "frontend-health-probe"
       }
     ]
 
     frontend_ip_configuration = [
       {
-        name                 = "public-frontend"
-        public_ip_address_id = ""
+        name = "public-frontend"
       }
     ]
 
