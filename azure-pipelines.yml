@@ -1,0 +1,61 @@
+name: azure-landing-zone-terraform-infra
+
+trigger: none
+# - main
+
+pool: Agent_01_Dec2025
+
+stages:
+  - stage: PreCommit
+    displayName: Pre-Commit / Static Analysis Stage
+    jobs:
+      - job: TerraformInstallInit
+        displayName: Terraform Install & Init
+        steps:
+          - task: TerraformInstaller@1
+            displayName: Terraform install
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformTask@5
+            displayName: Terraform init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+              backendServiceArm: 'infra-sc2'
+              backendAzureRmResourceGroupName: 'dkcstate-rg'
+              backendAzureRmStorageAccountName: 'dkcstatestg02'
+              backendAzureRmContainerName: 'statefiles'
+              backendAzureRmKey: 'dev.tfstate'
+
+      - job: TerraformFmtValidate
+        displayName: Terraform Fmt & Validate
+        dependsOn: TerraformInstallInit
+        steps:
+        - task: TerraformTask@5
+          displayName: Terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+            backendServiceArm: 'infra-sc2'
+            backendAzureRmResourceGroupName: 'dkcstate-rg'
+            backendAzureRmStorageAccountName: 'dkcstatestg02'
+            backendAzureRmContainerName: 'statefiles'
+            backendAzureRmKey: 'dev.tfstate'
+        - task: TerraformTask@5
+          displayName: Terraform Fmt
+          inputs:
+            provider: 'azurerm'
+            command: 'custom'
+            commandOptions: 'fmt -recursive'
+            outputTo: 'console'
+            environmentServiceNameAzureRM: 'infra-sc1'
+        - task: TerraformTask@5
+          displayName: Terraform Validate
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+
+
