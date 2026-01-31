@@ -233,7 +233,7 @@ subnet_nsg_nic_assoc = {
 
 key_vaults = {
   kv1 = {
-    key_vault_name              = "devnewkv05"
+    key_vault_name              = "devnewkv06"
     location                    = "West US 2"
     resource_group_name         = "dev_rg_01"
     enabled_for_disk_encryption = true
@@ -255,28 +255,28 @@ key_vault_secrets = {
   vmss_users = {
     secret_name         = "vmss-username"
     secret_value        = "adminuser"
-    key_vault_name      = "devnewkv05"
+    key_vault_name      = "devnewkv06"
     resource_group_name = "dev_rg_01"
   }
 
   vmss_pass = {
     secret_name         = "vmss-password"
     secret_value        = "Bbpl@#123456"
-    key_vault_name      = "devnewkv05"
+    key_vault_name      = "devnewkv06"
     resource_group_name = "dev_rg_01"
   }
 
   sql_user = {
     secret_name         = "db-username"
     secret_value        = "dbuser"
-    key_vault_name      = "devnewkv05"
+    key_vault_name      = "devnewkv06"
     resource_group_name = "dev_rg_01"
   }
 
   sql_pass = {
     secret_name         = "db-password"
     secret_value        = "Bbpl@#123456"
-    key_vault_name      = "devnewkv05"
+    key_vault_name      = "devnewkv06"
     resource_group_name = "dev_rg_01"
   }
 
@@ -305,7 +305,7 @@ key_vault_secrets = {
 #     version                       = "12.0"
 #     secret_name                   = "db-username"
 #     secret_password               = "db-password"
-#     key_vault_name                = "devnewkv05"
+#     key_vault_name                = "devnewkv06"
 #     connection_policy             = "Default"
 #     minimum_tls_version           = "1.2"
 #     public_network_access_enabled = true
@@ -402,7 +402,7 @@ virtual_machine_scale_sets = {
     sku                  = "Standard_D2ls_v5"
     secret_name          = "vmss-username"
     secret_password      = "vmss-password"
-    key_vault_name       = "devnewkv05"
+    key_vault_name       = "devnewkv06"
     virtual_network_name = "dev-vnet-01"
     subnet_name          = "subnet-02"
     nsg_name             = "devnsg01"
@@ -469,7 +469,7 @@ virtual_machine_scale_sets = {
     secret_name          = "vmss-username"
     secret_password      = "vmss-password"
     virtual_network_name = "dev-vnet-01"
-    key_vault_name       = "devnewkv05"
+    key_vault_name       = "devnewkv06"
     subnet_name          = "subnet-01"
     nsg_name             = "devnsg01"
     # app_gateway_name                = "dev-appgw-frontend"

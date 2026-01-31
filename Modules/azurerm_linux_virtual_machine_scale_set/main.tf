@@ -103,11 +103,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
       enable_accelerated_networking = lookup(network_interface.value, "enable_accelerated_networking", null)
       enable_ip_forwarding          = lookup(network_interface.value, "enable_ip_forwarding", null)
       dns_servers                   = lookup(network_interface.value, "dns_servers", null)
-      network_security_group_id     = data.azurerm_network_security_group.nsg[each.key].id
-      auxiliary_mode                = lookup(network_interface.value, "auxiliary_mode", null)
-      auxiliary_sku                 = lookup(network_interface.value, "auxiliary_sku", null)
+    network_security_group_id     = data.azurerm_network_security_group.nsg[each.key].id
+    auxiliary_mode                = lookup(network_interface.value, "auxiliary_mode", null)
+    auxiliary_sku                 = lookup(network_interface.value, "auxiliary_sku", null)
 
-      dynamic "ip_configuration" {
+    dynamic "ip_configuration" {
         for_each = network_interface.value.ip_configuration
         content {
           name      = ip_configuration.value.name
