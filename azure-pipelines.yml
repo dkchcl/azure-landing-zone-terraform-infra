@@ -98,31 +98,31 @@ stages:
             notifyUsers: 'dkc.hcl@gmail.com'
             approvers: 'dkc.hcl@gmail.com'
 
-  # - stage: ApplyStage 
-  #   displayName: Deploy / Apply Stage
-  #   dependsOn: ApprovalStage
-  #   jobs:
-  #     - job: TerraformApply
-  #       displayName: Terraform Apply
-  #       steps:
-  #       - task: TerraformTask@5
-  #         displayName: Terraform init
-  #         inputs:
-  #           provider: 'azurerm'
-  #           command: 'init'
-  #           workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
-  #           backendServiceArm: 'infra-sc2'
-  #           backendAzureRmResourceGroupName: 'dkcstate-rg'
-  #           backendAzureRmStorageAccountName: 'dkcstatestg02'
-  #           backendAzureRmContainerName: 'statefiles'
-  #           backendAzureRmKey: 'dev.terraform.tfstate'
-  #       - task: TerraformTask@5
-  #         displayName: Terraform Apply
-  #         inputs:
-  #           provider: 'azurerm'
-  #           command: 'apply'
-  #           workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
-  #           environmentServiceNameAzureRM: 'infra-sc2'
+  - stage: ApplyStage 
+    displayName: Deploy / Apply Stage
+    dependsOn: ApprovalStage
+    jobs:
+      - job: TerraformApply
+        displayName: Terraform Apply
+        steps:
+        - task: TerraformTask@5
+          displayName: Terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+            backendServiceArm: 'infra-sc2'
+            backendAzureRmResourceGroupName: 'dkcstate-rg'
+            backendAzureRmStorageAccountName: 'dkcstatestg02'
+            backendAzureRmContainerName: 'statefiles'
+            backendAzureRmKey: 'dev.terraform.tfstate'
+        - task: TerraformTask@5
+          displayName: Terraform Apply
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+            environmentServiceNameAzureRM: 'infra-sc2'
 
 
 
