@@ -26,7 +26,7 @@ stages:
               backendAzureRmResourceGroupName: 'dkcstate-rg'
               backendAzureRmStorageAccountName: 'dkcstatestg02'
               backendAzureRmContainerName: 'statefiles'
-              backendAzureRmKey: 'dev.tfstate'
+              backendAzureRmKey: 'dev.terraform.tfstate'
 
       - job: TerraformFmtValidate
         displayName: Terraform Fmt & Validate
@@ -42,7 +42,7 @@ stages:
             backendAzureRmResourceGroupName: 'dkcstate-rg'
             backendAzureRmStorageAccountName: 'dkcstatestg02'
             backendAzureRmContainerName: 'statefiles'
-            backendAzureRmKey: 'dev.tfstate'
+            backendAzureRmKey: 'dev.terraform.tfstate'
         - task: TerraformTask@5
           displayName: Terraform Fmt
           inputs:
@@ -57,5 +57,72 @@ stages:
             provider: 'azurerm'
             command: 'validate'
             workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+
+  - stage: PlanStage
+    displayName: Plan & Review Stage
+    dependsOn: PreCommit
+    jobs:
+      - job: TerraformPlan
+        displayName: Terraform Plan
+        steps:
+        - task: TerraformTask@5
+          displayName: Terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+            backendServiceArm: 'infra-sc2'
+            backendAzureRmResourceGroupName: 'dkcstate-rg'
+            backendAzureRmStorageAccountName: 'dkcstatestg02'
+            backendAzureRmContainerName: 'statefiles'
+            backendAzureRmKey: 'dev.terraform.tfstate'
+        - task: TerraformTask@5
+          displayName: Terraform Plan
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+            environmentServiceNameAzureRM: 'infra-sc2'
+    
+  - stage: ApprovalStage
+    displayName: Approval & Governance Stage
+    dependsOn: PlanStage
+    pool: server
+    jobs:
+      - job: MannualApproval
+        displayName: Mannual Approval
+        steps:
+        - task: ManualValidation@1
+          displayName: Manual Validation
+          inputs:
+            notifyUsers: 'dkc.hcl@gmail.com'
+            approvers: 'dkc.hcl@gmail.com'
+
+  # - stage: ApplyStage 
+  #   displayName: Deploy / Apply Stage
+  #   dependsOn: ApprovalStage
+  #   jobs:
+  #     - job: TerraformApply
+  #       displayName: Terraform Apply
+  #       steps:
+  #       - task: TerraformTask@5
+  #         displayName: Terraform init
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'init'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+  #           backendServiceArm: 'infra-sc2'
+  #           backendAzureRmResourceGroupName: 'dkcstate-rg'
+  #           backendAzureRmStorageAccountName: 'dkcstatestg02'
+  #           backendAzureRmContainerName: 'statefiles'
+  #           backendAzureRmKey: 'dev.terraform.tfstate'
+  #       - task: TerraformTask@5
+  #         displayName: Terraform Apply
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'apply'
+  #           workingDirectory: '$(System.DefaultWorkingDirectory)/Enviroments/Dev'
+  #           environmentServiceNameAzureRM: 'infra-sc2'
+
 
 
